@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teendő lista</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #taskInput {
+            width: 70%;
+            padding: 10px;
+            margin-right: 5px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+
+        #addButton {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #addButton:hover {
+            background-color: #45a049;
+        }
+
+        #taskList {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        #taskList li {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #taskList li:hover {
+            background-color: #f0f0f0;
+        }
+
+        #taskList li.completed {
+            text-decoration: line-through;
+            color: #888;
+            background-color: #f8f8f8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Teendő lista</h1>
+        <input type="text" id="taskInput" placeholder="Írd ide az új teendőt...">
+        <button id="addButton">Hozzáadás</button>
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const taskInput = document.getElementById('taskInput');
+            const addButton = document.getElementById('addButton');
+            const taskList = document.getElementById('taskList');
+
+            // Új teendő hozzáadása
+            function addTask() {
+                const taskText = taskInput.value.trim();
+                
+                if (taskText !== '') {
+                    const li = document.createElement('li');
+                    li.textContent = taskText;
+                    
+                    // Kattintásra áthúzás
+                    li.addEventListener('click', () => {
+                        li.classList.toggle('completed');
+                    });
+                    
+                    taskList.appendChild(li);
+                    taskInput.value = '';
+                }
+                taskInput.focus();
+            }
+
+            // Gombnyomásra hozzáadás
+            addButton.addEventListener('click', addTask);
+
+            // Enter billentyűre hozzáadás
+            taskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addTask();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
