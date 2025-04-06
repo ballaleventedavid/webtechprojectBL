@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git App - Repo adatlap</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h4 id="name"></h4>
+    <p id="description"></p>
+    <p id="homepage"></p>
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h4>Files</h4>
+                <table id="file-list">
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Size</th>
+                    </tr>
+                </table>
+            </div>
+            <div class="col">
+                <h4>Latest issues</h4>
+                <ul id="issues"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        async function loadRepo(repoName) {
+            try {
+                const res = await fetch('https://api.github.com/repos/' + repoName, {
+                    headers: {
+                        'Authorization': 'Bearer ' + GITHUB_ACCESS_TOKEN
+                    }
+                });
+
+                if (!res.ok) {
+                    throw 'Server error occurred, status code: ' + res.status;
+                }
+
+                const data = await res.json();
+
+                const nameElem = document.querySelector('#name');
+                nameElem.textContent = data.full_name;
+
+                const descElem = document.querySelector('#description');
+                descElem.textContent = data.description;
+
+                if (data.homepage) {
+                    const homepageElem = document.querySelector('#homepage');
+                    homepageElem.innerHTML = `
+                        <strong>Homepage:</strong>
+                        <a href="${data.homepage}">${data.homepage}</a>
+                    `;
+                }
+            } catch (err) {
+                if (typeof err == 'string') {
+                    alert(err);
+                }
+
+                console.error(err);
+            }
+        }
+
+        async function loadFiles(repoName) {
+            try {
+                const res = await fetch(`https://api.github.com/repos/${repoName}/contents/`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + GITHUB_ACCESS_TOKEN
+                    }
+                });
+
+                if (!res.ok) {
+                    throw 'Server error occurred, status code: ' + res.status;
+                }
+
+                const data = await res.json();
+
+                const tableElem = document.querySelector('#file-list');
+
+                for (const file of data) {
+                    const fileHtml = `
+                        <tr>
+                            <td>${file.name}</td>
+                            <td>${file.type}</td>
+                            <td>${file.size} bytes</td>
+                        </tr>
+                    `;
+                    tableElem.innerHTML += fileHtml;
+                }
+            } catch (err) {
+                if (typeof err == 'string') {
+                    alert(err);
+                }
+
+                console.error(err);
+            }
+        }
+
+        async function loadIssues(repoName) {
+            try {
+                const res = await fetch(`https://api.github.com/repos/${repoName}/issues`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + GITHUB_ACCESS_TOKEN
+                    }
+                });
+
+                if (!res.ok) {
+                    throw 'Server error occurred, status code: ' + res.status;
+                }
+
+                const data = await res.json();
+
+                const issuesList = document.querySelector('#issues');
+                for (const issue of data) {
+                    const issueHtml = `<li>${issue.title}</li>`;
+                    issuesList.innerHTML += issueHtml;
+                }
+
+            } catch (err) {
+                if (typeof err == 'string') {
+                    alert(err);
+                }
+
+                console.error(err);
+            }
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const repoName = params.get('name');
+
+        if (!repoName) {
+            window.location = 'index.html';
+        }
+
+        loadRepo(repoName);
+        loadFiles(repoName);
+        loadIssues(repoName);
+    </script>
+</body>
+</html>

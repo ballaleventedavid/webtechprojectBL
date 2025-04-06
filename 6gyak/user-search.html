@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git App - Felhasználó keresés</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        
+        .user-card img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+            vertical-align: middle;
+        }
+        .user-card span {
+            vertical-align: middle;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h4>Felhasználó keresése</h4>
+
+    <label for="user-name">Felhasználónév:</label>
+    <input type="text" id="user-name" placeholder="pl. octocat">
+    <button id="search-btn" class="btn btn-primary">Keresés</button>
+
+    <div id="results" style="margin-top: 20px;">
+        
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        const searchBtn = document.querySelector('#search-btn');
+        const searchInput = document.querySelector('#user-name');
+        const resultsDiv = document.querySelector('#results');
+
+        async function searchUsers(searchTerm) {
+            
+            resultsDiv.innerHTML = '';
+
+            
+            if (!searchTerm || searchTerm.trim() === '') {
+                alert('Kérlek, add meg a keresett felhasználónevet!');
+                return; 
+            }
+
+            try {
+                const response = await fetch(`https://api.github.com/search/users?q=${encodeURIComponent(searchTerm)}`, {
+                    headers: {
+                        
+                        'Authorization': 'Bearer ' + GITHUB_ACCESS_TOKEN,
+                        'Accept': 'application/vnd.github.v3+json' 
+                    }
+                });
+
+                if (!response.ok) {
+                    
+                    throw new Error(`GitHub API error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(user => {
+                        const userHtml = `
+                            <div class="card user-card">
+                                <img src="${user.avatar_url}" alt="${user.login} profile picture">
+                                <span>${user.login}</span>
+                                <!-- Optional: Add a link to the user's GitHub profile -->
+                                <a href="${user.html_url}" target="_blank" style="margin-left: 10px;">(Profil megtekintése)</a>
+                            </div>
+                        `;
+                        resultsDiv.innerHTML += userHtml;
+                    });
+                } else {
+                    resultsDiv.innerHTML = '<p>Nincs találat.</p>';
+                }
+
+            } catch (error) {
+                console.error('Hiba történt a felhasználók keresésekor:', error);
+                
+                resultsDiv.innerHTML = `<p style="color: red;">Hiba történt a keresés közben. Kérlek, próbáld újra később. (${error.message})</p>`;
+                
+                
+            }
+        }
+
+        searchBtn.addEventListener('click', () => {
+            const searchTerm = searchInput.value;
+            searchUsers(searchTerm);
+        });
+
+        searchInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                searchBtn.click(); 
+            }
+        });
+    </script>
+</body>
+</html>

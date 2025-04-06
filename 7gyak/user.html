@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git App - Felhasználói adatlap</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        
+        #user-details {
+            display: flex;
+            align-items: flex-start; 
+            gap: 20px; 
+        }
+        #user-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+        }
+        #user-info p {
+            margin-bottom: 0.5em; 
+        }
+        #user-info strong {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    
+
+    <h3>Felhasználói adatlap</h3>
+
+    <div id="user-profile" class="card">
+        
+        <p>Adatok betöltése...</p>
+    </div>
+
+    <script src="app.js"></script> 
+    <script>
+        const userProfileDiv = document.getElementById('user-profile');
+
+        
+        function appendDetail(container, label, value, isLink = false) {
+            
+            if (value !== null && value !== undefined && value !== '') {
+                const p = document.createElement('p');
+                const strong = document.createElement('strong');
+                strong.textContent = label + ':';
+                p.appendChild(strong);
+
+                if (isLink) {
+                    const a = document.createElement('a');
+                    
+                    a.href = value.startsWith('http') ? value : `http://${value}`;
+                    a.textContent = value;
+                    a.target = '_blank'; 
+                    a.rel = 'noopener noreferrer'; 
+                    p.appendChild(a);
+                } else {
+                    p.appendChild(document.createTextNode(' ' + value)); 
+                }
+                container.appendChild(p);
+            }
+        }
+
+        async function loadUserData(username) {
+            try {
+                const response = await fetch(`https://api.github.com/users/${username}`, {
+                    headers: {
+                        'Authorization': `Bearer ${GITHUB_ACCESS_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error(`Felhasználó nem található: ${username}`);
+                    } else {
+                        throw new Error(`GitHub API hiba! Státusz: ${response.status}`);
+                    }
+                }
+
+                const user = await response.json();
+
+                
+                userProfileDiv.innerHTML = '';
+
+                
+                const detailsDiv = document.createElement('div');
+                detailsDiv.id = 'user-details'; 
+
+                const avatarImg = document.createElement('img');
+                avatarImg.id = 'user-avatar';
+                avatarImg.src = user.avatar_url;
+                avatarImg.alt = `${user.login} profilkép`;
+                detailsDiv.appendChild(avatarImg);
+
+                const infoDiv = document.createElement('div');
+                infoDiv.id = 'user-info';
+
+                
+                const nameHeader = document.createElement('h4');
+                nameHeader.textContent = user.name ? user.name : user.login;
+                infoDiv.appendChild(nameHeader);
+
+                
+                 if (user.name && user.name !== user.login) {
+                     const loginP = document.createElement('p');
+                     loginP.innerHTML = `<em>(${user.login})</em>`; 
+                     infoDiv.appendChild(loginP);
+                 }
+
+
+                
+                appendDetail(infoDiv, 'Bio', user.bio);
+                appendDetail(infoDiv, 'Blog', user.blog, true); 
+                appendDetail(infoDiv, 'Location', user.location);
+                appendDetail(infoDiv, 'Public Repos', user.public_repos);
+                appendDetail(infoDiv, 'Followers', user.followers);
+
+                detailsDiv.appendChild(infoDiv);
+                userProfileDiv.appendChild(detailsDiv);
+
+            } catch (error) {
+                console.error('Hiba a felhasználói adatok lekérésekor:', error);
+                userProfileDiv.innerHTML = `<p style="color: red;">Hiba történt: ${error.message}</p>`;
+            }
+        }
+
+        
+        const params = new URLSearchParams(window.location.search);
+        const username = params.get('id');
+
+        if (!username) {
+           
+            userProfileDiv.innerHTML = '<p style="color: red;">Hiba: Nincs megadva felhasználói azonosító (id) a címsorban.</p>';
+            
+        } else {
+            
+            loadUserData(username);
+        }
+    </script>
+</body>
+</html>
