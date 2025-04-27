@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git App - Repo keresés</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h4>Repository keresése</h4>
+
+    <label for="repo-name">Repository neve:</label>
+    <input type="text" id="repo-name">
+    <button id="search-btn" class="btn btn-primary">Keresés</button>
+
+    <div id="results"></div>
+
+    <script src="app.js"></script>
+    <script>
+        function searchRepo(searchText) {
+            fetch('https://api.github.com/search/repositories?q=' + encodeURIComponent(searchText), {
+                headers: {
+                    'Authorization': 'Bearer ' + GITHUB_ACCESS_TOKEN
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    const resultDiv = document.querySelector('#results');
+                    resultDiv.innerHTML = '';
+                    
+                    for (const repo of data.items) {
+                        const repoOwner = repo.owner.login;
+                        const repoName = repo.name;
+                        const repoHtml = `
+                            <div class="card">
+                                <a href="repo.html?name=${repo.full_name}"><h4>${repo.full_name}</h4></a>
+                                <p>${repo.description}</p>
+                                <button onclick="toggleStar('${repoOwner}', '${repoName}')" id="star-btn-${repoOwner}-${repoName}" class="btn btn-primary">Kedvencnek jelöl</button>
+                            </div>
+                        `;
+                        resultDiv.innerHTML += repoHtml;
+                        checkStarStatus(repoOwner, repoName);
+                    }
+                });
+        }
+
+        function checkStarStatus(repoOwner, repoName) {
+            fetch(`https://api.github.com/user/starred/${repoOwner}/${repoName}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + GITHUB_ACCESS_TOKEN,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            })
+            .then(res => {
+                const starBtn = document.querySelector(`#star-btn-${repoOwner}-${repoName}`);
+                if (res.status === 204) {
+                    starBtn.textContent = 'Kedvencekből eltávolít';
+                } else {
+                    starBtn.textContent = 'Kedvencnek jelöl';
+                }
+            });
+        }
+
+        function toggleStar(repoOwner, repoName) {
+            const starBtn = document.querySelector(`#star-btn-${repoOwner}-${repoName}`);
+            const isStarred = starBtn.textContent === 'Kedvencekből eltávolít';
+            
+            const method = isStarred ? 'DELETE' : 'PUT';
+            
+            fetch(`https://api.github.com/user/starred/${repoOwner}/${repoName}`, {
+                method: method,
+                headers: {
+                    'Authorization': 'Bearer ' + GITHUB_ACCESS_TOKEN,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            })
+            .then(() => {
+                checkStarStatus(repoOwner, repoName);
+            });
+        }
+
+        const searchBtn = document.querySelector('#search-btn');
+        searchBtn.addEventListener('click', () => {
+            const searchText = document.querySelector('#repo-name').value;
+            searchRepo(searchText);
+        });
+    </script>
+</body>
+</html>
